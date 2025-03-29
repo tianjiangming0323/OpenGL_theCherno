@@ -53,6 +53,21 @@ int main(void)
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
     glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);
 
+  
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+    //S5 设置顶点属性
+    //设置两个例子，上面的positions[6]为例1
+    //再设置一个顶点属性struct，一个顶点有3个float为position，2个float为uv，3个float为normal
+    //glVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer)
+    //index:对于例2，position为0，uv为1，normal为2
+    //size: 取值只能为1，2，3，4      例1中position为2，例2中position为3，uv为2，normal为3    ————————即每个属性有几个值
+    //type: 数据类型，GL_FLOAT
+    //normalized: 是否需要归一化   GL_TRUE/GL_FALSE
+    //stride:顶点到顶点之间的偏移量。例1中，从顶点1到顶点2需要跨过两个float；例2中从顶点1到顶点2需要跨过3+2+3个float
+    //pointer:每一个顶点中，某属性的起点位置  例1中，position为0；例2中，position为0、uv为12、normal为20
+    glEnableVertexAttribArray(0);
+    //参数index：顶点属性的位置索引（例如 0 表示顶点位置，1 表示法线等）
+  
     //循环一直存在 直到用户关闭window
     while (!glfwWindowShouldClose(window))
     {
