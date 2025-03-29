@@ -8,6 +8,74 @@
 //在渲染时告诉OpenGL选择这个buffer和shader渲染个三角形出来
 //OpenGL根据buffer和shader决定绘制怎样的三角形，绘制在哪里
 
+//S7
+static unsigned int CompileShader(unsigned int type, const std::string& source)
+{
+    unsigned int id = glCreateShader(type);
+    //创建着色器对象
+    const char* src = source.c_str();
+    //设置着色器源码
+    //将 C++ 标准字符串（std::string）转换为 C 风格字符串
+    //OpenGL是基于 C 语言设计的，它们的函数参数通常需要 const char* 类型
+    glShaderSource(id, 1, &src, nullptr);
+    //将源码绑定到着色器对象
+    //glShaderSource(GLuint shader, GLsizei count, const GLchar *const* string, const GLint* length)
+    //shader:着色器对象 ID
+    //count:指定源码字符串的数量。如果源码是单条字符串（常见情况），设为 1；若源码分多段（如多行代码），设为对应的分段数
+    //string:着色器源码,类型需要 const char**（指针数组的指针），src的类型为char*，故需要输入&src
+    //length:字符串长度数组指针.如果为 nullptr，OpenGL 会假设每个字符串以 \0 结尾，自动计算长度
+    glCompileShader(id);
+    //编译着色器
+
+    int result;
+    glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+    //glGetShaderiv(GLuint shader,GLenum pname,GLint* params);
+    //shader:着色器对象ID
+    //pname:要查询的状态类型
+    //存储查询结果的变量地址(当查询的状态为GL_COMPILE_STATUS)
+
+    if (result == GL_FALSE)
+    {
+        int length;
+        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+        //返回着色器信息日志中的字符数
+        char* message = (char*)alloca(length * sizeof(char));
+        glGetShaderInfoLog(id, length, &length, message);
+        //将错误日志内容读取到指定的缓冲区
+        //glGetShaderInfoLog(GLuint shader, GLsizei maxLength, GLsizei* length, GLchar* infoLog);
+        //shader:着色器对象ID
+        //maxLength:缓冲区的最大容量（应与 GL_INFO_LOG_LENGTH 获取的值一致
+        //length:输出实际写入的日志长度（可忽略，直接传 nullptr
+        //message:存储错误日志的缓冲区指针
+
+        std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader!" << std::endl;
+        std::cout << message << std::endl;
+    }
+
+    return id;
+}
+
+//S7
+//创建完整的着色器程序，编译并链接着顶点和片段着色器，最终返回程序对象 ID
+static int CreateShader(const std::string& vertexShader, const std::string& fragmentShader)
+{
+    unsigned int program = glCreateProgram();
+    //创建着色器程序，空程序对象
+    unsigned int vs = CompileShader(GL_VERTEX_SHADER,vertexShader);
+    unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
+    //编译顶点和片段着色器
+
+    glAttachShader(program, vs);// 附加顶点着色器
+    glAttachShader(program, fs);// 附加片段着色器
+    glLinkProgram(program);// 链接程序
+    glValidateProgram(program);// 验证程序有效性（可选，调试用）
+
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+    //删除已链接的着色器对象
+    return program;
+}
+
 int main(void)
 {
     GLFWwindow* window;
@@ -53,7 +121,7 @@ int main(void)
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
     glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);
 
-  
+    
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
     //S5 设置顶点属性
     //设置两个例子，上面的positions[6]为例1
@@ -67,6 +135,31 @@ int main(void)
     //pointer:每一个顶点中，某属性的起点位置  例1中，position为0；例2中，position为0、uv为12、normal为20
     glEnableVertexAttribArray(0);
     //参数index：顶点属性的位置索引（例如 0 表示顶点位置，1 表示法线等）
+
+    //S7
+    std::string vertexShader =
+        "#version 330 core\n"
+        "\n"
+        "layout(location = 0) in vec4 position;\n"
+        "\n"
+        "void main()\n"
+        "{\n"
+        "   gl_Position = position;\n"
+        "}\n";
+
+
+    std::string fragmentShader =
+        "#version 330 core\n"
+        "\n"
+        "layout(location = 0) out vec4 color; \n"
+        "\n"
+        "void main()\n"
+        "{\n"
+        "   color = vec4(1.0, 0.0 ,0.0, 1.0);\n"
+        "}\n";
+
+    unsigned int shader = CreateShader(vertexShader, fragmentShader);
+    glUseProgram(shader);
   
     //循环一直存在 直到用户关闭window
     while (!glfwWindowShouldClose(window))
@@ -95,6 +188,9 @@ int main(void)
         /* Poll for and process events */
         glfwPollEvents();
     }
+
+    //S7
+    glDeleteProgram(shader);
 
     glfwTerminate();
     return 0;
