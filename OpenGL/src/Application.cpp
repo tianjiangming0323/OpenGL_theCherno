@@ -2,11 +2,60 @@
 #include "GLFW/glfw3.h"
 
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
 
 //S4 OpenGL是一个函数接口，具体的函数实现是写在显卡驱动上的
 //将openGL看做一个状态机   状态机里已经有例如buffer（数据）和shader
 //在渲染时告诉OpenGL选择这个buffer和shader渲染个三角形出来
 //OpenGL根据buffer和shader决定绘制怎样的三角形，绘制在哪里
+//最好的gl学习文档docs.gl
+
+//S8
+struct ShaderProgramSource
+{
+    std::string VertexSource;
+    std::string FragmentSource;
+};
+
+//S8
+static ShaderProgramSource ParseShader(const std::string& filepath)
+{
+    std::ifstream stream(filepath);
+    //输入文件流：从磁盘文件中读取数据到内存
+
+    enum class ShaderType
+    {
+        NONE = -1, VERTEX = 0, FRAGMENT = 1
+    };
+
+    std::string line;
+    std::stringstream ss[2];
+    //字符串流
+    ShaderType type = ShaderType::NONE;
+    while (getline(stream, line))  
+    //istream& getline(istream& stream, string& line)
+    //stream:输入流对象
+    //line:存储读取内容的字符串引用
+    //是 C++ 标准库中用于从输入流（如文件、字符串）中逐行读取数据的函数
+    //从 stream 中读取字符，直到遇到换行符 \n 或流结束
+    {
+        if (line.find("#shader") != std::string::npos)  //表示找到了
+        {
+            if (line.find("vertex") != std::string::npos)
+                type = ShaderType::VERTEX;
+            else if (line.find("fragment") != std::string::npos)
+                type = ShaderType::FRAGMENT;
+        }
+        else
+        {
+            ss[(int)type] << line << '\n';
+        }
+    }
+
+    return { ss[0].str(),ss[1].str() };
+}
 
 //S7
 static unsigned int CompileShader(unsigned int type, const std::string& source)
@@ -48,7 +97,7 @@ static unsigned int CompileShader(unsigned int type, const std::string& source)
         //length:输出实际写入的日志长度（可忽略，直接传 nullptr
         //message:存储错误日志的缓冲区指针
 
-        std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader!" << std::endl;
+        std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader!"<< std::endl;
         std::cout << message << std::endl;
     }
 
@@ -57,6 +106,7 @@ static unsigned int CompileShader(unsigned int type, const std::string& source)
 
 //S7
 //创建完整的着色器程序，编译并链接着顶点和片段着色器，最终返回程序对象 ID
+//&在声明语句中表示引用，非声明语句表示取址
 static int CreateShader(const std::string& vertexShader, const std::string& fragmentShader)
 {
     unsigned int program = glCreateProgram();
@@ -64,6 +114,7 @@ static int CreateShader(const std::string& vertexShader, const std::string& frag
     unsigned int vs = CompileShader(GL_VERTEX_SHADER,vertexShader);
     unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
     //编译顶点和片段着色器
+
 
     glAttachShader(program, vs);// 附加顶点着色器
     glAttachShader(program, fs);// 附加片段着色器
@@ -99,7 +150,7 @@ int main(void)
     //S3 要成功调用glewInit需要再OpenGL project -> Properties -> C/C++ -> Preprocessor -> Preprocessor Definition 中定义GLEW_STATIC
     //原因 glewInit函数需要，自个儿在函数定义里去找吧（需要定义GLEWAPI， 然后是GLEW_STATIC
     if (glewInit() != GLEW_OK)
-        std::cout << "Error !" << std::endl;
+        std::cout << "Error !"<< std::endl;
     //glew函数的调用必须在设置openGL上下文之后
 
     std::cout << glGetString(GL_VERSION) << std::endl;
@@ -136,16 +187,17 @@ int main(void)
     glEnableVertexAttribArray(0);
     //参数index：顶点属性的位置索引（例如 0 表示顶点位置，1 表示法线等）
 
-    //S7
-    std::string vertexShader =
+    //S7添加
+    //S8注释掉
+   /* std::string vertexShader =
         "#version 330 core\n"
         "\n"
-        "layout(location = 0) in vec4 position;\n"
+        "layout(location = 0) in vec4 position; \n"
         "\n"
         "void main()\n"
-        "{\n"
-        "   gl_Position = position;\n"
-        "}\n";
+        "{ \n"
+        "   gl_Position = position; \n"
+        "}\n"; 
 
 
     std::string fragmentShader =
@@ -154,12 +206,17 @@ int main(void)
         "layout(location = 0) out vec4 color; \n"
         "\n"
         "void main()\n"
-        "{\n"
-        "   color = vec4(1.0, 0.0 ,0.0, 1.0);\n"
-        "}\n";
+        "{ \n"
+        "  color = vec4(1.0, 0.0 ,0.0, 1.0); \n"
+        "}\n"; */
 
-    unsigned int shader = CreateShader(vertexShader, fragmentShader);
+
+    //S8添加
+    ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
+
+    unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
     glUseProgram(shader);
+ 
   
     //循环一直存在 直到用户关闭window
     while (!glfwWindowShouldClose(window))
@@ -178,9 +235,13 @@ int main(void)
         //发出DrawCall OpenGL根据缓冲中的数据进行渲染
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
-        //S4 这里有个问题，OpenGL是怎么知道该渲染哪个buffer里的数据呢
+        //S4
+        //void glDrawArrays(GLenum mode, GLint first, GLsizei count );
+        //mode:指定绘制的图元类型,GL_TRIANGLES：每 3 个顶点 构成一个独立三角形
+        //first:从顶点数据数组的哪个位置开始读取顶点
+        //count:总共需要绘制多少个顶点(GL_TRIANGLES：必须是3的倍数）  count/3 即绘制的三角形数量
+        //这里有个问题，OpenGL是怎么知道该渲染哪个buffer里的数据呢
         //答：bind的是哪个，就渲染哪个，因为OpenGL是上下文相关的
-        //最好的gl学习文档docs.gl
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
@@ -189,7 +250,6 @@ int main(void)
         glfwPollEvents();
     }
 
-    //S7
     glDeleteProgram(shader);
 
     glfwTerminate();
