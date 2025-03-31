@@ -6,11 +6,44 @@
 #include <string>
 #include <sstream>
 
+#define ASSERT(x) if (!(x)) __debugbreak();
+#define GLCALL(x) GLClearError();\
+                  x;\
+                  ASSERT(GLLogCall(#x, __FILE__, __LINE__))
+
 //S4 OpenGL是一个函数接口，具体的函数实现是写在显卡驱动上的
 //将openGL看做一个状态机   状态机里已经有例如buffer（数据）和shader
 //在渲染时告诉OpenGL选择这个buffer和shader渲染个三角形出来
 //OpenGL根据buffer和shader决定绘制怎样的三角形，绘制在哪里
 //最好的gl学习文档docs.gl
+
+//S10
+static void GLClearError()
+{
+    while (glGetError() != GL_NO_ERROR);
+    //判断调用该函数之前的代码有没有错误
+    //如果有错误就会陷入死循环
+}
+
+//S10
+//static void GLCheckError()
+//{
+//    while (GLenum error = glGetError())
+//    {
+//        std::cout << "[OpenGL Error] (" << error << ")" << std::endl;
+//    }
+//}
+static bool GLLogCall(const char* function, const char* file, int line)
+{
+    while (GLenum error = glGetError())
+    {
+        std::cout << "[OpenGL Error] (" << error << "):" << function << " " << file << ":"<< line << std::endl;
+        return false;
+    }
+    return true;
+}
+
+
 
 //S8
 struct ShaderProgramSource
@@ -282,7 +315,10 @@ int main(void)
         //答：bind的是哪个，就渲染哪个，因为OpenGL是上下文相关的
         //S9 添加index buffer后注释
 
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        //S10添加,添加了宏后注释
+        //GLClearError();
+
+        GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
         //S9
         //OpenGL 中用于根据索引缓冲区（EBO/IBO）绘制几何体的核心函数
         //void glDrawElements(GLenum mode, GLsizei count, GLenum type, const void* indices // 索引数据的起始偏移（字节）);
@@ -299,6 +335,13 @@ int main(void)
         //3.设置顶点属性指针：通过 glVertexAttribPointer 定义数据格式
         //4.绘制调用：glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0)
         //数据交互通过顶点属性指针
+
+        //S10添加
+        //GLCheckError();
+        //返回的整形，转换成16进制后，可以在glew.h中寻找报错类型
+
+        //S10添加，更新了GLCheckError，添加了宏后注释
+        //ASSERT(GLLogCall());
 
 
         /* Swap front and back buffers */
