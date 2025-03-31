@@ -136,7 +136,7 @@ int main(void)
         return -1;
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(480, 480, "Hello World", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -155,11 +155,28 @@ int main(void)
 
     std::cout << glGetString(GL_VERSION) << std::endl;
 
-    float positions[6] =
+    float positions[12] =
     {
-        -0.5f, -0.5f,
-         0.0f,  0.5f,
-         0.5f, -0.5f
+        -0.5f, -0.5f, //index = 0
+         0.5f, -0.5f, //index = 1
+         0.5f,  0.5f, //index = 2
+
+        // 0.5f,  0.5f,
+        -0.5f,  0.5f  //index = 3
+        //-0.5f, -0.5f
+
+        //S9 把所有顶点搁进来，内存占用太大
+        //每绘制两个挨着的三角形，就要重复两个订单
+        //并且当以后顶点属性更大时，例如还有法线、uv等属性，消耗更大
+        //故引入索引缓冲区 index buffer
+    };
+
+    //S9 index buffer
+    //需要 unsigned 型
+    unsigned int indices[] =
+    {
+        0, 1, 2,
+        2, 3, 0
     };
 
     unsigned int buffer;
@@ -170,7 +187,28 @@ int main(void)
     //glGenBuffers(3, buffers); // 生成 3 个缓冲对象名称
     //使用 buffers[0], buffers[1], buffers[2] 分别操作
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(float), positions, GL_STATIC_DRAW);
+    //S4
+    //用于向缓冲区对象填充数据的核心函数  必须在绑定缓冲区后调用
+    //void glBufferData(GLenum target, GLsizeiptr size, const void* data, GLenum usage);
+    //target: 缓冲区类型（如 GL_ARRAY_BUFFER:顶点属性数据（如顶点坐标）、GL_ELEMENT_ARRAY_BUFFER：索引数据）
+    //size: 数据的总字节大小
+    //data: 指向数据的指针（如顶点数组）
+    //usage: 数据的使用方式（如 GL_STATIC_DRAW:数据几乎不变（如静态模型顶点）、GL_DYNAMIC_DRAW:数据频繁修改（如动态 UI 元素）、GL_STREAM_DRAW:数据每帧修改（如粒子系统）)
+
+    //S9 自己关于绑定的疑惑：
+    //在为buffer中绑定数据的时候，我怎么确定是绑定给了buffer了呢，会不会绑定到其他同样是GL_ARRAY_BUFFER的缓冲区中呢
+    //glBindBuffer(GL_ARRAY_BUFFER, buffer) 的作用
+    //这一步将 buffer 设置为当前活跃的 GL_ARRAY_BUFFER 目标。后续所有针对 GL_ARRAY_BUFFER 的操作（如 glBufferData）均作用于当前绑定的缓冲区（即buffer）
+    //而glBufferData函数永远针对当前绑定的目标缓冲区（即最后一次 glBindBuffer 调用的结果）进行操作。
+    //在 OpenGL 的渲染过程中，每个绑定点（Target）同一时间只能绑定一个缓冲区对象。绑定新缓冲区时，旧缓冲区会自动解绑
+    //但不同绑定点的缓冲区可以同时绑定
+
+    //S9
+    unsigned int ibo;   //index buffer object
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
 
     
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
@@ -234,7 +272,7 @@ int main(void)
         //创建顶点缓冲区,包含这些顶点数据，将buffer传到OpenGL的VRAM
         //发出DrawCall OpenGL根据缓冲中的数据进行渲染
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        //glDrawArrays(GL_TRIANGLES, 0, 6);
         //S4
         //void glDrawArrays(GLenum mode, GLint first, GLsizei count );
         //mode:指定绘制的图元类型,GL_TRIANGLES：每 3 个顶点 构成一个独立三角形
@@ -242,6 +280,26 @@ int main(void)
         //count:总共需要绘制多少个顶点(GL_TRIANGLES：必须是3的倍数）  count/3 即绘制的三角形数量
         //这里有个问题，OpenGL是怎么知道该渲染哪个buffer里的数据呢
         //答：bind的是哪个，就渲染哪个，因为OpenGL是上下文相关的
+        //S9 添加index buffer后注释
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        //S9
+        //OpenGL 中用于根据索引缓冲区（EBO/IBO）绘制几何体的核心函数
+        //void glDrawElements(GLenum mode, GLsizei count, GLenum type, const void* indices // 索引数据的起始偏移（字节）);
+        //mode: 图元类型（如 GL_TRIANGLES、GL_LINES）
+        //count:要绘制的索引数量
+        //type: 索引的数据类型（如 GL_UNSIGNED_INT）
+        //indices: 索引数据的起始偏移（字节）
+
+        //S9
+        //index buffer怎么知道索引指向的位置呢
+        //答：以索引指向顶点的完整流程
+        //1.绑定顶点缓冲区（VBO）：glBindBuffer(GL_ARRAY_BUFFER, vbo)
+        //2.绑定索引缓冲区（IBO）：glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo)，IBO存储的是顶点缓冲区的索引值
+        //3.设置顶点属性指针：通过 glVertexAttribPointer 定义数据格式
+        //4.绘制调用：glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0)
+        //数据交互通过顶点属性指针
+
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
