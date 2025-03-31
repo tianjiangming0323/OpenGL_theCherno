@@ -7,6 +7,8 @@
 #include <sstream>
 
 #define ASSERT(x) if (!(x)) __debugbreak();
+//如果x为假，则打断点
+
 #define GLCALL(x) GLClearError();\
                   x;\
                   ASSERT(GLLogCall(#x, __FILE__, __LINE__))
@@ -99,18 +101,18 @@ static unsigned int CompileShader(unsigned int type, const std::string& source)
     //设置着色器源码
     //将 C++ 标准字符串（std::string）转换为 C 风格字符串
     //OpenGL是基于 C 语言设计的，它们的函数参数通常需要 const char* 类型
-    glShaderSource(id, 1, &src, nullptr);
+    GLCALL(glShaderSource(id, 1, &src, nullptr));
     //将源码绑定到着色器对象
     //glShaderSource(GLuint shader, GLsizei count, const GLchar *const* string, const GLint* length)
     //shader:着色器对象 ID
     //count:指定源码字符串的数量。如果源码是单条字符串（常见情况），设为 1；若源码分多段（如多行代码），设为对应的分段数
     //string:着色器源码,类型需要 const char**（指针数组的指针），src的类型为char*，故需要输入&src
     //length:字符串长度数组指针.如果为 nullptr，OpenGL 会假设每个字符串以 \0 结尾，自动计算长度
-    glCompileShader(id);
+    GLCALL(glCompileShader(id));
     //编译着色器
 
     int result;
-    glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+    GLCALL(glGetShaderiv(id, GL_COMPILE_STATUS, &result));
     //glGetShaderiv(GLuint shader,GLenum pname,GLint* params);
     //shader:着色器对象ID
     //pname:要查询的状态类型
@@ -119,10 +121,10 @@ static unsigned int CompileShader(unsigned int type, const std::string& source)
     if (result == GL_FALSE)
     {
         int length;
-        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+        GLCALL(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length));
         //返回着色器信息日志中的字符数
         char* message = (char*)alloca(length * sizeof(char));
-        glGetShaderInfoLog(id, length, &length, message);
+        GLCALL(glGetShaderInfoLog(id, length, &length, message));
         //将错误日志内容读取到指定的缓冲区
         //glGetShaderInfoLog(GLuint shader, GLsizei maxLength, GLsizei* length, GLchar* infoLog);
         //shader:着色器对象ID
@@ -149,13 +151,13 @@ static int CreateShader(const std::string& vertexShader, const std::string& frag
     //编译顶点和片段着色器
 
 
-    glAttachShader(program, vs);// 附加顶点着色器
-    glAttachShader(program, fs);// 附加片段着色器
-    glLinkProgram(program);// 链接程序
-    glValidateProgram(program);// 验证程序有效性（可选，调试用）
+    GLCALL(glAttachShader(program, vs));// 附加顶点着色器
+    GLCALL(glAttachShader(program, fs));// 附加片段着色器
+    GLCALL(glLinkProgram(program));// 链接程序
+    GLCALL(glValidateProgram(program));// 验证程序有效性（可选，调试用）
 
-    glDeleteShader(vs);
-    glDeleteShader(fs);
+    GLCALL(glDeleteShader(vs));
+    GLCALL(glDeleteShader(fs));
     //删除已链接的着色器对象
     return program;
 }
@@ -178,6 +180,10 @@ int main(void)
 
     //设置上下文
     glfwMakeContextCurrent(window);
+
+    //S11添加
+    glfwSwapInterval(1);
+    //启用垂直同步（帧率锁定为显示器刷新率）
 
 
     //S3 要成功调用glewInit需要再OpenGL project -> Properties -> C/C++ -> Preprocessor -> Preprocessor Definition 中定义GLEW_STATIC
@@ -213,16 +219,17 @@ int main(void)
     };
 
     unsigned int buffer;
-    glGenBuffers(1, &buffer);
+    GLCALL(glGenBuffers(1, &buffer));
     //该函数接受两个参数，第一个是生成的buffer数量，第二个参数是buffer的唯一标识符（无符号整形）
     //OpenGL中所有生成的东西都会被分配一个唯一整数标识符
     //GLuint buffers[3];
     //glGenBuffers(3, buffers); // 生成 3 个缓冲对象名称
     //使用 buffers[0], buffers[1], buffers[2] 分别操作
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(float), positions, GL_STATIC_DRAW);
+    GLCALL(glBindBuffer(GL_ARRAY_BUFFER, buffer));
+    GLCALL(glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(float), positions, GL_STATIC_DRAW));
     //S4
     //用于向缓冲区对象填充数据的核心函数  必须在绑定缓冲区后调用
+    //在这一步数据从CPU内存到GPU显存
     //void glBufferData(GLenum target, GLsizeiptr size, const void* data, GLenum usage);
     //target: 缓冲区类型（如 GL_ARRAY_BUFFER:顶点属性数据（如顶点坐标）、GL_ELEMENT_ARRAY_BUFFER：索引数据）
     //size: 数据的总字节大小
@@ -239,12 +246,12 @@ int main(void)
 
     //S9
     unsigned int ibo;   //index buffer object
-    glGenBuffers(1, &ibo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+    GLCALL(glGenBuffers(1, &ibo));
+    GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
+    GLCALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW));
 
     
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+    GLCALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0));
     //S5 设置顶点属性
     //设置两个例子，上面的positions[6]为例1
     //再设置一个顶点属性struct，一个顶点有3个float为position，2个float为uv，3个float为normal
@@ -255,7 +262,7 @@ int main(void)
     //normalized: 是否需要归一化   GL_TRUE/GL_FALSE
     //stride:顶点到顶点之间的偏移量。例1中，从顶点1到顶点2需要跨过两个float；例2中从顶点1到顶点2需要跨过3+2+3个float
     //pointer:每一个顶点中，某属性的起点位置  例1中，position为0；例2中，position为0、uv为12、normal为20
-    glEnableVertexAttribArray(0);
+    GLCALL(glEnableVertexAttribArray(0));
     //参数index：顶点属性的位置索引（例如 0 表示顶点位置，1 表示法线等）
 
     //S7添加
@@ -286,14 +293,24 @@ int main(void)
     ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
 
     unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
-    glUseProgram(shader);
- 
-  
+    GLCALL(glUseProgram(shader));
+
+    //S11
+    GLCALL(int location = glGetUniformLocation(shader, "u_Color"));
+    ASSERT(location != -1);
+    //GLCALL(glUniform4f(location, 0.2f, 0.3f, 0.8f, 1.0f));   
+    //glUseProgram中定义了u_Color（显存中）
+    //又在C++代码中定义了uniform
+
+    float r = 0.0f;
+    float increment = 0.05f;
+
     //循环一直存在 直到用户关闭window
     while (!glfwWindowShouldClose(window))
     {
+
         /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
+        GLCALL(glClear(GL_COLOR_BUFFER_BIT));
 
         /*glBegin(GL_TRIANGLES);
         glVertex2f(-0.5f, -0.5f);
@@ -317,6 +334,13 @@ int main(void)
 
         //S10添加,添加了宏后注释
         //GLClearError();
+
+        //S11添加
+        GLCALL(glUniform4f(location, r, 0.3f, 0.8f, 1.0f));
+        //uniforms are set per draw while attributes are set per vertex
+        //比如说要给构成正方形的两个三角形设置不同的颜色
+        //由于两个三角形是在同一个draw call里渲染的
+        //则使用uniforms不能实现，只能用attributes
 
         GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
         //S9
@@ -343,6 +367,16 @@ int main(void)
         //S10添加，更新了GLCheckError，添加了宏后注释
         //ASSERT(GLLogCall());
 
+        //S11添加
+        if (r > 1.0f)
+        {
+            increment = -0.05f;
+        }
+        else if (r < 0.0f)
+        {
+            increment = 0.05f;
+        }
+        r += increment;
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
@@ -351,7 +385,7 @@ int main(void)
         glfwPollEvents();
     }
 
-    glDeleteProgram(shader);
+    GLCALL(glDeleteProgram(shader));
 
     glfwTerminate();
     return 0;
