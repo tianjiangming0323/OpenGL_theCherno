@@ -170,6 +170,23 @@ int main(void)
     if (!glfwInit())
         return -1;
 
+    //S12添加
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);   //要求 GLFW 创建 OpenGL 3.3 的上下文
+    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);   //兼容模式
+    //用于配置 GLFW 窗口的 OpenGL 上下文版本和模式
+    // NVIDIA会默认返回更高版本的 OpenGL（如 4.6），但依然支持兼容模式
+    //例如，设置 3.3 时，驱动可能返回 4.6，但仍允许使用 3.3 的功能和兼容特性
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);   //核心模式
+    //兼容模式和核心模式的区别：是否支持旧版 OpenGL 的已弃用功能
+    /* 核心模式（Core Profile）
+       目标：提供纯现代的 OpenGL 实现，强制使用可编程管线。
+       特性：
+       移除所有已弃用功能：例如固定管线（glBegin / glEnd）、立即模式（glVertex3f）、旧版矩阵操作（glMatrixMode）、光照（glLightfv）等
+       强制使用现代特性：必须使用着色器（Shader）、顶点缓冲对象（VBO）、顶点数组对象（VAO）等
+       严格版本控制：上下文版本严格遵循 glfwWindowHint 设置的版本（如 3.3、4.6）*/
+
+
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(480, 480, "Hello World", NULL, NULL);
     if (!window)
@@ -218,6 +235,12 @@ int main(void)
         2, 3, 0
     };
 
+
+    //S12
+    unsigned int vao;
+    GLCALL(glGenVertexArrays(1, &vao));
+    GLCALL(glBindVertexArray(vao));
+
     unsigned int buffer;
     GLCALL(glGenBuffers(1, &buffer));
     //该函数接受两个参数，第一个是生成的buffer数量，第二个参数是buffer的唯一标识符（无符号整形）
@@ -252,7 +275,7 @@ int main(void)
 
     
     GLCALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0));
-    //S5 设置顶点属性
+    //S5 设置顶点属性 仅作用于GL_ARRAY_BUFFER
     //设置两个例子，上面的positions[6]为例1
     //再设置一个顶点属性struct，一个顶点有3个float为position，2个float为uv，3个float为normal
     //glVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer)
@@ -262,6 +285,7 @@ int main(void)
     //normalized: 是否需要归一化   GL_TRUE/GL_FALSE
     //stride:顶点到顶点之间的偏移量。例1中，从顶点1到顶点2需要跨过两个float；例2中从顶点1到顶点2需要跨过3+2+3个float
     //pointer:每一个顶点中，某属性的起点位置  例1中，position为0；例2中，position为0、uv为12、normal为20
+    //同时，这句是连接vao和buffer的桥梁
     GLCALL(glEnableVertexAttribArray(0));
     //参数index：顶点属性的位置索引（例如 0 表示顶点位置，1 表示法线等）
 
@@ -302,6 +326,12 @@ int main(void)
     //glUseProgram中定义了u_Color（显存中）
     //又在C++代码中定义了uniform
 
+    //S12添加
+    GLCALL(glUseProgram(0));
+    GLCALL(glBindVertexArray(0));
+    GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+    GLCALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+
     float r = 0.0f;
     float increment = 0.05f;
 
@@ -311,6 +341,12 @@ int main(void)
 
         /* Render here */
         GLCALL(glClear(GL_COLOR_BUFFER_BIT));
+
+        //S12添加
+        GLCALL(glUseProgram(shader));
+        GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
+        GLCALL(glBindVertexArray(vao));
+        
 
         /*glBegin(GL_TRIANGLES);
         glVertex2f(-0.5f, -0.5f);
