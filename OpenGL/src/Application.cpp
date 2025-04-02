@@ -9,6 +9,8 @@
 #include "Renderer.h"
 #include "IndexBuffer.h"
 #include "VertexBuffer.h"
+#include "VertexArray.h"
+#include "VertexBufferLayout.h"
 
 //S4 OpenGL是一个函数接口，具体的函数实现是写在显卡驱动上的
 //将openGL看做一个状态机   状态机里已经有例如buffer（数据）和shader
@@ -206,10 +208,22 @@ int main(void)
         };
 
 
-        //S12  顶点数组
-        unsigned int vao;
+        //S12  添加 顶点数组
+        //S14 注释
+        /*unsigned int vao;
         GLCALL(glGenVertexArrays(1, &vao));
-        GLCALL(glBindVertexArray(vao));
+        GLCALL(glBindVertexArray(vao));*/
+
+
+        //S14 添加   顶点数组类
+        VertexArray va;
+        VertexBufferLayout layout;
+        layout.Push<float>(2);
+        //这么做的好处是可以easily添加其他的layout布局
+        //如果后面要添加3维法线
+        //layout.Push<float>(3);
+        
+
 
         //S13 将顶点缓冲区注释掉，在VertexBuffer.h中实现
         //unsigned int buffer;
@@ -252,7 +266,11 @@ int main(void)
         //S13添加
         IndexBuffer ib(indices, 6);
 
-        GLCALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0));
+        //S14
+        va.AddBuffer(vb,layout);
+
+        //S14 注释
+        //GLCALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0));
         //S5 设置顶点属性 仅作用于GL_ARRAY_BUFFER
         //设置两个例子，上面的positions[6]为例1
         //再设置一个顶点属性struct，一个顶点有3个float为position，2个float为uv，3个float为normal
@@ -264,7 +282,7 @@ int main(void)
         //stride:顶点到顶点之间的偏移量。例1中，从顶点1到顶点2需要跨过两个float；例2中从顶点1到顶点2需要跨过3+2+3个float
         //pointer:每一个顶点中，某属性的起点位置  例1中，position为0；例2中，position为0、uv为12、normal为20
         //同时，这句是连接vao和buffer的桥梁
-        GLCALL(glEnableVertexAttribArray(0));
+        //GLCALL(glEnableVertexAttribArray(0));
         //参数index：顶点属性的位置索引（例如 0 表示顶点位置，1 表示法线等）
 
         //S7添加
@@ -291,7 +309,7 @@ int main(void)
             "}\n"; */
 
 
-            //S8添加
+        //S8添加
         ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
 
         unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
@@ -322,10 +340,10 @@ int main(void)
 
             //S12添加
             GLCALL(glUseProgram(shader));
-            //GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));  S13
+            //GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));  S13注释
             ib.Bind();
-            GLCALL(glBindVertexArray(vao));
-
+            //GLCALL(glBindVertexArray(vao));                      S14注释
+            va.Bind();                                           //S14添加
 
             /*glBegin(GL_TRIANGLES);
             glVertex2f(-0.5f, -0.5f);
