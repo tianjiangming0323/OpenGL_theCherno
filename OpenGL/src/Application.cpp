@@ -11,6 +11,7 @@
 #include "VertexBuffer.h"
 #include "VertexArray.h"
 #include "VertexBufferLayout.h"
+#include "Shader.h"
 
 //S4 OpenGL是一个函数接口，具体的函数实现是写在显卡驱动上的
 //将openGL看做一个状态机   状态机里已经有例如buffer（数据）和shader
@@ -18,120 +19,124 @@
 //OpenGL根据buffer和shader决定绘制怎样的三角形，绘制在哪里
 //最好的gl学习文档docs.gl
 
-//S8
-struct ShaderProgramSource
-{
-    std::string VertexSource;
-    std::string FragmentSource;
-};
+//S8 添加
+//S15 注释
+//struct ShaderProgramSource
+//{
+//    std::string VertexSource;
+//    std::string FragmentSource;
+//};
 
-//S8
-static ShaderProgramSource ParseShader(const std::string& filepath)
-{
-    std::ifstream stream(filepath);
-    //输入文件流：从磁盘文件中读取数据到内存
+//S8 添加
+//S15 注释
+//static ShaderProgramSource ParseShader(const std::string& filepath)
+//{
+//    std::ifstream stream(filepath);
+//    //输入文件流：从磁盘文件中读取数据到内存
+//
+//    enum class ShaderType
+//    {
+//        NONE = -1, VERTEX = 0, FRAGMENT = 1
+//    };
+//
+//    std::string line;
+//    std::stringstream ss[2];
+//    //字符串流
+//    ShaderType type = ShaderType::NONE;
+//    while (getline(stream, line))  
+//    //istream& getline(istream& stream, string& line)
+//    //stream:输入流对象
+//    //line:存储读取内容的字符串引用
+//    //是 C++ 标准库中用于从输入流（如文件、字符串）中逐行读取数据的函数
+//    //从 stream 中读取字符，直到遇到换行符 \n 或流结束
+//    {
+//        if (line.find("#shader") != std::string::npos)  //表示找到了
+//        {
+//            if (line.find("vertex") != std::string::npos)
+//                type = ShaderType::VERTEX;
+//            else if (line.find("fragment") != std::string::npos)
+//                type = ShaderType::FRAGMENT;
+//        }
+//        else
+//        {
+//            ss[(int)type] << line << '\n';
+//        }
+//    }
+//
+//    return { ss[0].str(),ss[1].str() };
+//}
 
-    enum class ShaderType
-    {
-        NONE = -1, VERTEX = 0, FRAGMENT = 1
-    };
-
-    std::string line;
-    std::stringstream ss[2];
-    //字符串流
-    ShaderType type = ShaderType::NONE;
-    while (getline(stream, line))  
-    //istream& getline(istream& stream, string& line)
-    //stream:输入流对象
-    //line:存储读取内容的字符串引用
-    //是 C++ 标准库中用于从输入流（如文件、字符串）中逐行读取数据的函数
-    //从 stream 中读取字符，直到遇到换行符 \n 或流结束
-    {
-        if (line.find("#shader") != std::string::npos)  //表示找到了
-        {
-            if (line.find("vertex") != std::string::npos)
-                type = ShaderType::VERTEX;
-            else if (line.find("fragment") != std::string::npos)
-                type = ShaderType::FRAGMENT;
-        }
-        else
-        {
-            ss[(int)type] << line << '\n';
-        }
-    }
-
-    return { ss[0].str(),ss[1].str() };
-}
-
-//S7
-static unsigned int CompileShader(unsigned int type, const std::string& source)
-{
-    unsigned int id = glCreateShader(type);
-    //创建着色器对象
-    const char* src = source.c_str();
-    //设置着色器源码
-    //将 C++ 标准字符串（std::string）转换为 C 风格字符串
-    //OpenGL是基于 C 语言设计的，它们的函数参数通常需要 const char* 类型
-    GLCALL(glShaderSource(id, 1, &src, nullptr));
-    //将源码绑定到着色器对象
-    //glShaderSource(GLuint shader, GLsizei count, const GLchar *const* string, const GLint* length)
-    //shader:着色器对象 ID
-    //count:指定源码字符串的数量。如果源码是单条字符串（常见情况），设为 1；若源码分多段（如多行代码），设为对应的分段数
-    //string:着色器源码,类型需要 const char**（指针数组的指针），src的类型为char*，故需要输入&src
-    //length:字符串长度数组指针.如果为 nullptr，OpenGL 会假设每个字符串以 \0 结尾，自动计算长度
-    GLCALL(glCompileShader(id));
-    //编译着色器
-
-    int result;
-    GLCALL(glGetShaderiv(id, GL_COMPILE_STATUS, &result));
-    //glGetShaderiv(GLuint shader,GLenum pname,GLint* params);
-    //shader:着色器对象ID
-    //pname:要查询的状态类型
-    //存储查询结果的变量地址(当查询的状态为GL_COMPILE_STATUS)
-
-    if (result == GL_FALSE)
-    {
-        int length;
-        GLCALL(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length));
-        //返回着色器信息日志中的字符数
-        char* message = (char*)alloca(length * sizeof(char));
-        GLCALL(glGetShaderInfoLog(id, length, &length, message));
-        //将错误日志内容读取到指定的缓冲区
-        //glGetShaderInfoLog(GLuint shader, GLsizei maxLength, GLsizei* length, GLchar* infoLog);
-        //shader:着色器对象ID
-        //maxLength:缓冲区的最大容量（应与 GL_INFO_LOG_LENGTH 获取的值一致
-        //length:输出实际写入的日志长度（可忽略，直接传 nullptr
-        //message:存储错误日志的缓冲区指针
-
-        std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader!"<< std::endl;
-        std::cout << message << std::endl;
-    }
-
-    return id;
-}
+//S7 添加
+//S15 注释
+//static unsigned int CompileShader(unsigned int type, const std::string& source)
+//{
+//    unsigned int id = glCreateShader(type);
+//    //创建着色器对象
+//    const char* src = source.c_str();
+//    //设置着色器源码
+//    //将 C++ 标准字符串（std::string）转换为 C 风格字符串
+//    //OpenGL是基于 C 语言设计的，它们的函数参数通常需要 const char* 类型
+//    GLCALL(glShaderSource(id, 1, &src, nullptr));
+//    //将源码绑定到着色器对象
+//    //glShaderSource(GLuint shader, GLsizei count, const GLchar *const* string, const GLint* length)
+//    //shader:着色器对象 ID
+//    //count:指定源码字符串的数量。如果源码是单条字符串（常见情况），设为 1；若源码分多段（如多行代码），设为对应的分段数
+//    //string:着色器源码,类型需要 const char**（指针数组的指针），src的类型为char*，故需要输入&src
+//    //length:字符串长度数组指针.如果为 nullptr，OpenGL 会假设每个字符串以 \0 结尾，自动计算长度
+//    GLCALL(glCompileShader(id));
+//    //编译着色器
+//
+//    int result;
+//    GLCALL(glGetShaderiv(id, GL_COMPILE_STATUS, &result));
+//    //glGetShaderiv(GLuint shader,GLenum pname,GLint* params);
+//    //shader:着色器对象ID
+//    //pname:要查询的状态类型
+//    //存储查询结果的变量地址(当查询的状态为GL_COMPILE_STATUS)
+//
+//    if (result == GL_FALSE)
+//    {
+//        int length;
+//        GLCALL(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length));
+//        //返回着色器信息日志中的字符数
+//        char* message = (char*)alloca(length * sizeof(char));
+//        GLCALL(glGetShaderInfoLog(id, length, &length, message));
+//        //将错误日志内容读取到指定的缓冲区
+//        //glGetShaderInfoLog(GLuint shader, GLsizei maxLength, GLsizei* length, GLchar* infoLog);
+//        //shader:着色器对象ID
+//        //maxLength:缓冲区的最大容量（应与 GL_INFO_LOG_LENGTH 获取的值一致
+//        //length:输出实际写入的日志长度（可忽略，直接传 nullptr
+//        //message:存储错误日志的缓冲区指针
+//
+//        std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader!"<< std::endl;
+//        std::cout << message << std::endl;
+//    }
+//
+//    return id;
+//}
 
 //S7
 //创建完整的着色器程序，编译并链接着顶点和片段着色器，最终返回程序对象 ID
 //&在声明语句中表示引用，非声明语句表示取址
-static int CreateShader(const std::string& vertexShader, const std::string& fragmentShader)
-{
-    unsigned int program = glCreateProgram();
-    //创建着色器程序，空程序对象
-    unsigned int vs = CompileShader(GL_VERTEX_SHADER,vertexShader);
-    unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
-    //编译顶点和片段着色器
-
-
-    GLCALL(glAttachShader(program, vs));// 附加顶点着色器
-    GLCALL(glAttachShader(program, fs));// 附加片段着色器
-    GLCALL(glLinkProgram(program));// 链接程序
-    GLCALL(glValidateProgram(program));// 验证程序有效性（可选，调试用）
-
-    GLCALL(glDeleteShader(vs));
-    GLCALL(glDeleteShader(fs));
-    //删除已链接的着色器对象
-    return program;
-}
+//S15 注释
+//static unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader)
+//{
+//    unsigned int program = glCreateProgram();
+//    //创建着色器程序，空程序对象
+//    unsigned int vs = CompileShader(GL_VERTEX_SHADER,vertexShader);
+//    unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
+//    //编译顶点和片段着色器
+//
+//
+//    GLCALL(glAttachShader(program, vs));// 附加顶点着色器
+//    GLCALL(glAttachShader(program, fs));// 附加片段着色器
+//    GLCALL(glLinkProgram(program));// 链接程序
+//    GLCALL(glValidateProgram(program));// 验证程序有效性（可选，调试用）
+//
+//    GLCALL(glDeleteShader(vs));
+//    GLCALL(glDeleteShader(fs));
+//    //删除已链接的着色器对象
+//    return program;
+//}
 
 int main(void)
 {
@@ -310,23 +315,36 @@ int main(void)
 
 
         //S8添加
-        ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
-
+        //S15 注释
+        /*ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
         unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
-        GLCALL(glUseProgram(shader));
+        GLCALL(glUseProgram(shader));*/
 
-        //S11
-        GLCALL(int location = glGetUniformLocation(shader, "u_Color"));
-        ASSERT(location != -1);
+        //S15 添加
+        Shader shader("res/shaders/Basic.shader");
+        shader.Bind();
+
+
+        //S11 添加
+        //S15 注释
+       /* GLCALL(int location = glGetUniformLocation(shader, "u_Color"));
+        ASSERT(location != -1);*/
         //GLCALL(glUniform4f(location, 0.2f, 0.3f, 0.8f, 1.0f));   
         //glUseProgram中定义了u_Color（显存中）
         //又在C++代码中定义了uniform
 
-        //S12添加
-        GLCALL(glUseProgram(0));
+       
+
+        //S12 添加  
+        //S15 修改
+       /* GLCALL(glUseProgram(0));
         GLCALL(glBindVertexArray(0));
         GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
-        GLCALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+        GLCALL(glBindBuffer(GL_ARRAY_BUFFER, 0));*/
+        shader.Unbind();
+        va.Unbind();
+        ib.Unbind();
+        vb.Unbind();
 
         float r = 0.0f;
         float increment = 0.05f;
@@ -338,12 +356,13 @@ int main(void)
             /* Render here */
             GLCALL(glClear(GL_COLOR_BUFFER_BIT));
 
-            //S12添加
-            GLCALL(glUseProgram(shader));
+            //S12添加  S15 修改
+            shader.Bind();//GLCALL(glUseProgram(shader));
             //GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));  S13注释
             ib.Bind();
             //GLCALL(glBindVertexArray(vao));                      S14注释
             va.Bind();                                           //S14添加
+            //不需要再绑定vb了，数据管理已经在va中实现
 
             /*glBegin(GL_TRIANGLES);
             glVertex2f(-0.5f, -0.5f);
@@ -368,8 +387,8 @@ int main(void)
             //S10添加,添加了宏后注释
             //GLClearError();
 
-            //S11添加
-            GLCALL(glUniform4f(location, r, 0.3f, 0.8f, 1.0f));
+            //S11添加  S15修改
+            shader.SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);//GLCALL(glUniform4f(location, r, 0.3f, 0.8f, 1.0f));
             //uniforms are set per draw while attributes are set per vertex
             //比如说要给构成正方形的两个三角形设置不同的颜色
             //由于两个三角形是在同一个draw call里渲染的
@@ -417,8 +436,8 @@ int main(void)
             /* Poll for and process events */
             glfwPollEvents();
         }
-
-        GLCALL(glDeleteProgram(shader));
+        //S15 注释  在析构函数中会自动调用shader.Unbind()
+        //GLCALL(glDeleteProgram(shader));
     }
     //S13添加
     //添加了一个新的作用域
