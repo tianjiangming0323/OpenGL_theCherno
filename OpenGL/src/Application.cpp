@@ -346,6 +346,11 @@ int main(void)
         ib.Unbind();
         vb.Unbind();
 
+
+        //S16添加
+        Renderer renderer;
+
+
         float r = 0.0f;
         float increment = 0.05f;
 
@@ -354,14 +359,15 @@ int main(void)
         {
 
             /* Render here */
-            GLCALL(glClear(GL_COLOR_BUFFER_BIT));
+            //GLCALL(glClear(GL_COLOR_BUFFER_BIT));    S16注释
+            renderer.Clear();
 
             //S12添加  S15 修改
-            shader.Bind();//GLCALL(glUseProgram(shader));
+            shader.Bind();//GLCALL(glUseProgram(shader));        
             //GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));  S13注释
-            ib.Bind();
+            //ib.Bind();                                           //S16注释，添加到Renderer.h中去
             //GLCALL(glBindVertexArray(vao));                      S14注释
-            va.Bind();                                           //S14添加
+            //va.Bind();                                           //S14添加      S16注释，添加到Renderer.h中去
             //不需要再绑定vb了，数据管理已经在va中实现
 
             /*glBegin(GL_TRIANGLES);
@@ -387,6 +393,9 @@ int main(void)
             //S10添加,添加了宏后注释
             //GLClearError();
 
+            
+
+
             //S11添加  S15修改
             shader.SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);//GLCALL(glUniform4f(location, r, 0.3f, 0.8f, 1.0f));
             //uniforms are set per draw while attributes are set per vertex
@@ -394,7 +403,11 @@ int main(void)
             //由于两个三角形是在同一个draw call里渲染的
             //则使用uniforms不能实现，只能用attributes
 
-            GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
+            //S16添加
+            renderer.Draw(va, ib, shader);
+            
+
+            //GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));      //S16注释，添加到Renderer.h中去
             //S9
             //OpenGL 中用于根据索引缓冲区（EBO/IBO）绘制几何体的核心函数
             //void glDrawElements(GLenum mode, GLsizei count, GLenum type, const void* indices // 索引数据的起始偏移（字节）);
