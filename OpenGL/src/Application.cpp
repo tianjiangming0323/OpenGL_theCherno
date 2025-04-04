@@ -12,6 +12,7 @@
 #include "VertexArray.h"
 #include "VertexBufferLayout.h"
 #include "Shader.h"
+#include "Texture.h"
 
 //S4 OpenGL是一个函数接口，具体的函数实现是写在显卡驱动上的
 //将openGL看做一个状态机   状态机里已经有例如buffer（数据）和shader
@@ -188,14 +189,15 @@ int main(void)
     std::cout << glGetString(GL_VERSION) << std::endl;
 
     {
-        float positions[12] =
+        //S17 修改数组数据，添加了uv坐标
+        float positions[16] =
         {
-            -0.5f, -0.5f, //index = 0
-             0.5f, -0.5f, //index = 1
-             0.5f,  0.5f, //index = 2
+            -0.5f, -0.5f, 0.0f, 0.0f,//index = 0
+             0.5f, -0.5f, 1.0f, 0.0f,//index = 1
+             0.5f,  0.5f, 1.0f, 1.0f,//index = 2
 
              // 0.5f,  0.5f,
-             -0.5f,  0.5f  //index = 3
+             -0.5f, 0.5f, 0.0f, 1.0f,  //index = 3
              //-0.5f, -0.5f
 
              //S9 把所有顶点搁进来，内存占用太大
@@ -212,6 +214,10 @@ int main(void)
             2, 3, 0
         };
 
+        //S17添加
+        GLCALL(glEnable(GL_BLEND));
+        GLCALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
 
         //S12  添加 顶点数组
         //S14 注释
@@ -227,6 +233,9 @@ int main(void)
         //这么做的好处是可以easily添加其他的layout布局
         //如果后面要添加3维法线
         //layout.Push<float>(3);
+        // 
+        //S17 添加UV坐标
+        layout.Push<float>(2);
         
 
 
@@ -259,7 +268,8 @@ int main(void)
 
 
         //S13添加
-        VertexBuffer vb(positions, 8 * sizeof(float));
+        //S17修改   4 * 2  改成   4 * 4
+        VertexBuffer vb(positions, 4 * 4 * sizeof(float));
 
         //S9添加
         //S13注释，在IndexBuffer.h中实现
@@ -321,7 +331,7 @@ int main(void)
         GLCALL(glUseProgram(shader));*/
 
         //S15 添加
-        Shader shader("res/shaders/Basic.shader");
+        Shader shader("res/shaders/TextureShader.shader");
         shader.Bind();
 
 
@@ -341,6 +351,12 @@ int main(void)
         GLCALL(glBindVertexArray(0));
         GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
         GLCALL(glBindBuffer(GL_ARRAY_BUFFER, 0));*/
+
+        //S17添加
+        Texture texture("res/textures/pic.png");
+        texture.Bind();
+        shader.SetUniform1i("u_Texture", 0);   //将该材质绑定到插槽0
+
         shader.Unbind();
         va.Unbind();
         ib.Unbind();
