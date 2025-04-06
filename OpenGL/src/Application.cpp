@@ -14,6 +14,9 @@
 #include "Shader.h"
 #include "Texture.h"
 
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+
 //S4 OpenGL是一个函数接口，具体的函数实现是写在显卡驱动上的
 //将openGL看做一个状态机   状态机里已经有例如buffer（数据）和shader
 //在渲染时告诉OpenGL选择这个buffer和shader渲染个三角形出来
@@ -165,7 +168,7 @@ int main(void)
 
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(480, 480, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -217,6 +220,10 @@ int main(void)
         //S17添加
         GLCALL(glEnable(GL_BLEND));
         GLCALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+        //FLL P169
+        //src:片元产生的颜色
+        //dst:已经存在于颜色缓冲中的颜色
+        //对于透明物体，由于关闭了深度写入，所以渲染顺序很重要
 
 
         //S12  添加 顶点数组
@@ -281,6 +288,16 @@ int main(void)
         //S13添加
         IndexBuffer ib(indices, 6);
 
+        //S18添加
+        glm::mat4 proj = glm::ortho(-2.0f, 2.0f, -1.5f, 1.5f, -1.0f, 1.0f);
+        //正交投影矩阵将 3D 空间中的物体投影到 2D 平面上，不产生透视效果（物体大小不随距离变化）
+        //glm::ortho 的参数定义了正交投影的 视景体（View Frustum）范围：glm::ortho(left, right, bottom, top, near, far)
+        //如果将代码改成glm::ortho(-4.0f, 4.0f, -3.0f, 3.0f, -1.0f, 1.0f)
+        //渲染出的结果变小
+        //因为正交投影矩阵会将视景体（View Frustum）内的坐标线性映射到归一化设备坐标（NDC）的 [-1, 1] 范围
+        //将position数组的顶点坐标分别改成+- 2 或+-1.5，看看结果会有更深的理解
+       
+
         //S14
         va.AddBuffer(vb,layout);
 
@@ -335,6 +352,10 @@ int main(void)
         shader.Bind();
 
 
+        //S18添加
+        shader.SetUnifromMat4f("u_MVP", proj);
+
+
         //S11 添加
         //S15 注释
        /* GLCALL(int location = glGetUniformLocation(shader, "u_Color"));
@@ -356,6 +377,7 @@ int main(void)
         Texture texture("res/textures/pic.png");
         texture.Bind();
         shader.SetUniform1i("u_Texture", 0);   //将该材质绑定到插槽0
+        //将 u_Texture 的值设为 0，表示着色器应从 GL_TEXTURE0 单元读取纹理
 
         shader.Unbind();
         va.Unbind();

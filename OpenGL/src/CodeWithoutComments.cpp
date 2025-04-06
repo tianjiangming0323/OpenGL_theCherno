@@ -14,6 +14,8 @@
 //#include "Shader.h"
 //#include "Texture.h"
 //
+//#include "glm/glm.hpp"
+//#include "glm/gtc/matrix_transform.hpp"
 //
 //
 //int main(void)
@@ -27,7 +29,7 @@
 //    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);   
 //    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  
 //
-//    window = glfwCreateWindow(480, 480, "Hello World", NULL, NULL);
+//    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
 //    if (!window)
 //    {
 //        glfwTerminate();
@@ -71,6 +73,8 @@
 //        VertexBuffer vb(positions, 4 * 4 * sizeof(float));
 //        IndexBuffer ib(indices, 6);
 //
+//        glm::mat4 proj = glm::ortho(-2.0f, 2.0f, -1.5f, 1.5f, -1.0f, 1.0f);
+//
 //        va.AddBuffer(vb, layout);
 //
 //        
@@ -78,8 +82,10 @@
 //        shader.Bind();
 // 
 //		Texture texture("res/textures/pic.png");
-//	    texture.Bind();
+//        texture.Bind();
 //        shader.SetUniform1i("u_Texture", 0);
+//        
+//        shader.SetUnifromMat4f("u_MVP", proj);
 //
 //        shader.Unbind();
 //        va.Unbind();
