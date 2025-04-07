@@ -296,12 +296,21 @@ int main(void)
         //渲染出的结果变小
         //因为正交投影矩阵会将视景体（View Frustum）内的坐标线性映射到归一化设备坐标（NDC）的 [-1, 1] 范围
         //将position数组的顶点坐标分别改成+- 2 或+-1.5，看看结果会有更深的理解
-        //proj结果(在OpenGL中为主列排列)
-        //(  2/(r-l),         0,         0,   -(r+l)/(r-l)
-        //         0,   2/(t-b),         0,   -(t+b)/(t-b)
-        //         0,         0,   2/(n-f),  -(n+f)/(n-f),
+        //proj结果(在OpenGL中为主列排列),这里显示的结果还是主行
+        //(  2/(r-l),         0,         0,   -(r+l)/(r-l),
+        //         0,   2/(t-b),         0,   -(t+b)/(t-b),
+        //         0,         0,   2/(n-f),   -(n+f)/(n-f),
         //         0,         0,         0,             1)
        
+        //S21添加
+        glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(-1, 0, 0));
+        //将初始单位矩阵（glm::mat4(1.0f)）沿 x 轴负方向平移 1 单位
+        //1,0,0,-1,
+        //0,1,0,0,
+        //0,0,1,0,
+        //0,0,0,1
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(2, 0.5, 0));
+        glm::mat4 mvp =  proj * view * model;
 
         //S14
         va.AddBuffer(vb,layout);
@@ -358,7 +367,8 @@ int main(void)
 
 
         //S18添加
-        shader.SetUnifromMat4f("u_MVP", proj);
+        //S21修改  proj   为mvp
+        shader.SetUnifromMat4f("u_MVP", mvp);
 
 
         //S11 添加
