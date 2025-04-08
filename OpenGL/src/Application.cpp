@@ -16,6 +16,9 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw_gl3.h"
+
 
 //S4 OpenGL是一个函数接口，具体的函数实现是写在显卡驱动上的
 //将openGL看做一个状态机   状态机里已经有例如buffer（数据）和shader
@@ -309,8 +312,9 @@ int main(void)
         //0,1,0,0,
         //0,0,1,0,
         //0,0,0,1
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(2, 0.5, 0));
-        glm::mat4 mvp =  proj * view * model;
+        //S22注释
+        //glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(2, 0.5, 0));
+        //glm::mat4 mvp =  proj * view * model;
 
         //S14
         va.AddBuffer(vb,layout);
@@ -368,7 +372,8 @@ int main(void)
 
         //S18添加
         //S21修改  proj   为mvp
-        shader.SetUnifromMat4f("u_MVP", mvp);
+        //S22注释
+        //shader.SetUnifromMat4f("u_MVP", mvp);
 
 
         //S11 添加
@@ -403,6 +408,14 @@ int main(void)
         //S16添加
         Renderer renderer;
 
+        //S22添加
+        ImGui::CreateContext();
+        ImGui_ImplGlfwGL3_Init(window, true);
+        ImGui::StyleColorsDark();
+        
+
+        //S22添加
+        glm::vec3 translation(2.0f, 0.5f, 0.0f);
 
         float r = 0.0f;
         float increment = 0.05f;
@@ -414,6 +427,16 @@ int main(void)
             /* Render here */
             //GLCALL(glClear(GL_COLOR_BUFFER_BIT));    S16注释
             renderer.Clear();
+
+
+            //S22添加
+            ImGui_ImplGlfwGL3_NewFrame();
+
+
+            //S22添加   
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), translation);
+            //glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(2, 0.5, 0));
+            glm::mat4 mvp = proj * view * model;
 
             //S12添加  S15 修改
             shader.Bind();//GLCALL(glUseProgram(shader));        
@@ -456,6 +479,10 @@ int main(void)
             //由于两个三角形是在同一个draw call里渲染的
             //则使用uniforms不能实现，只能用attributes
 
+
+            //S22添加
+            shader.SetUnifromMat4f("u_MVP", mvp);
+
             //S16添加
             renderer.Draw(va, ib, shader);
             
@@ -496,6 +523,23 @@ int main(void)
             }
             r += increment;
 
+            //S22添加
+            {
+               
+                ImGui::SliderFloat3("Translation", &translation.x, 0.0f, 1.0f); //0.0f 和 1.0f 分别是滑动条的最小值和最大值
+                //自己最开始有个疑问：translation是3维的，那么translation.x就应该只是一个float值
+                //那ImGui是怎么能控制x、y、z三个方向的移动的？？
+                //ImGui::SliderFloat3 的第二个参数类型是 float[3]，即一个 包含 3 个连续 float 的数组 的指针
+                //而glm::vec3 是一个包含 3 个 float 分量的结构体，其内存布局默认是 连续的
+                //即&translation.x 可以被视为一个 指向连续 3 个 float 的指针（即 float* 或 float[3]）
+                ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            }
+
+            //S22添加
+            ImGui::Render();
+            ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
+
+
             /* Swap front and back buffers */
             glfwSwapBuffers(window);
 
@@ -512,6 +556,10 @@ int main(void)
     //故解决办法是加一个作用域
     //运行到作用域结尾，就会调用析构函数，然后再调用glfwTerminate()
     
+    //S22添加
+    ImGui_ImplGlfwGL3_Shutdown();
+    ImGui::DestroyContext();
+
     glfwTerminate();
     return 0;
 }
