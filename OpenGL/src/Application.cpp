@@ -306,7 +306,7 @@ int main(void)
         //         0,         0,         0,             1)
        
         //S21添加
-        glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(-1, 0, 0));
+        glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
         //将初始单位矩阵（glm::mat4(1.0f)）沿 x 轴负方向平移 1 单位
         //1,0,0,-1,
         //0,1,0,0,
@@ -415,7 +415,8 @@ int main(void)
         
 
         //S22添加
-        glm::vec3 translation(2.0f, 0.5f, 0.0f);
+        glm::vec3 translationA(2.0f, 0.5f, 0.0f);
+        glm::vec3 translationB(0.0f, 0.5f, 0.0f);
 
         float r = 0.0f;
         float increment = 0.05f;
@@ -431,12 +432,6 @@ int main(void)
 
             //S22添加
             ImGui_ImplGlfwGL3_NewFrame();
-
-
-            //S22添加   
-            glm::mat4 model = glm::translate(glm::mat4(1.0f), translation);
-            //glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(2, 0.5, 0));
-            glm::mat4 mvp = proj * view * model;
 
             //S12添加  S15 修改
             shader.Bind();//GLCALL(glUseProgram(shader));        
@@ -480,11 +475,31 @@ int main(void)
             //则使用uniforms不能实现，只能用attributes
 
 
-            //S22添加
-            shader.SetUnifromMat4f("u_MVP", mvp);
+            {
+                //S22添加   
+                //S23修改
+                glm::mat4 model = glm::translate(glm::mat4(1.0f), translationA);
+                glm::mat4 mvp = proj * view * model;
+                shader.SetUnifromMat4f("u_MVP", mvp);
 
-            //S16添加
-            renderer.Draw(va, ib, shader);
+                renderer.Draw(va, ib, shader);
+            }
+
+            {
+                //S23添加   
+                glm::mat4 model = glm::translate(glm::mat4(1.0f), translationB);
+                glm::mat4 mvp = proj * view * model;
+                shader.SetUnifromMat4f("u_MVP", mvp);
+
+                renderer.Draw(va, ib, shader);
+            }
+
+
+
+
+            //S16添加   
+            //S23注释，移到{}里，多次渲染
+            //renderer.Draw(va, ib, shader);
             
 
             //GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));      //S16注释，添加到Renderer.h中去
@@ -526,7 +541,8 @@ int main(void)
             //S22添加
             {
                
-                ImGui::SliderFloat3("Translation", &translation.x, 0.0f, 1.0f); //0.0f 和 1.0f 分别是滑动条的最小值和最大值
+                ImGui::SliderFloat3("Translation A", &translationA.x, 0.0f, 1.0f); //0.0f 和 1.0f 分别是滑动条的最小值和最大值
+                ImGui::SliderFloat3("Translation B", &translationB.x, 0.0f, 1.0f); //S23 添加B 的UI滑动条
                 //自己最开始有个疑问：translation是3维的，那么translation.x就应该只是一个float值
                 //那ImGui是怎么能控制x、y、z三个方向的移动的？？
                 //ImGui::SliderFloat3 的第二个参数类型是 float[3]，即一个 包含 3 个连续 float 的数组 的指针
