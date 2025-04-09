@@ -81,7 +81,7 @@
 //        Shader shader("res/shaders/TextureShader.shader");
 //        shader.Bind();
 // 
-//		Texture texture("res/textures/pic.png");
+//		  Texture texture("res/textures/pic.png");
 //        texture.Bind();
 //        shader.SetUniform1i("u_Texture", 0);
 //        
