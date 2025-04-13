@@ -21,6 +21,8 @@
 #include "imgui/imgui_impl_glfw_gl3.h"
 
 #include "tests/TestClearColor.h"
+#include "tests/TestTexture2D.h"
+#include "tests/TestRectangle.h"
 
 
 int main(void)
@@ -67,6 +69,9 @@ int main(void)
         test::TestMenu* testMenu = new test::TestMenu(currentTest);
         currentTest = testMenu;
         testMenu->RegisterTest<test::TestClearColor>("Clear Color");
+        testMenu->RegisterTest<test::TestTexture2D>("Texture2D");
+        testMenu->RegisterTest<test::TestRectangle>("Test Rectangle");
+        
 
         //S24Ìí¼Ó
         //S25×¢ÊÍ
@@ -112,6 +117,11 @@ int main(void)
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
+
+        //S25Ìí¼Ó
+        delete currentTest;
+        if (currentTest != testMenu)
+            delete testMenu;
        
     }
 

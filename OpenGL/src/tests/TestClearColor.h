@@ -15,5 +15,7 @@ namespace test
 	
 	private:
 		float m_ClearColor[4];
+		
+		
 	};
 }
