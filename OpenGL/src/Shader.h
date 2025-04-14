@@ -18,7 +18,7 @@ private:
 	unsigned int m_RendererID;
 
 	//caching for uniforms
-	std::unordered_map<std::string, int> m_UniformLocationCache;
+	mutable std::unordered_map<std::string, int> m_UniformLocationCache;
 
 
 public:
@@ -36,7 +36,9 @@ public:
 private:
 	ShaderProgramSource ParseShader(const std::string& filepath);
 	unsigned int CompileShader(unsigned int type, const std::string& source);
-	int GetUniformLocation(const std::string& name);
+	int GetUniformLocation(const std::string& name) const;
+	//const表示该函数无法修改类成员变量的值
+	//除非成员变量前面加mutable修饰词
 	unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader);
 	
 };

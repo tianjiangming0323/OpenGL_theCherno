@@ -57,10 +57,10 @@ namespace test
 		float vertexAttribute[] =
 		{
 			//位置              颜色
-			0.5f, 0.5f, 0.0f, m_Color1[0], m_Color1[1], m_Color1[2], // 右上
-			0.5f, -0.5f, 0.0f, m_Color2[0], m_Color2[1], m_Color2[2], // 右下
+			 0.5f,  0.5f, 0.0f, m_Color1[0], m_Color1[1], m_Color1[2], // 右上
+			 0.5f, -0.5f, 0.0f, m_Color2[0], m_Color2[1], m_Color2[2], // 右下
 			-0.5f, -0.5f, 0.0f, m_Color3[0], m_Color3[1], m_Color3[2], // 左下
-			-0.5f, 0.5f, 0.0f, m_Color4[0], m_Color4[1], m_Color4[2]  // 左上
+			-0.5f,  0.5f, 0.0f, m_Color4[0], m_Color4[1], m_Color4[2]  // 左上
 		};
 			
 
