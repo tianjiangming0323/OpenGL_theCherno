@@ -50,19 +50,35 @@ int main(void)
     std::cout << glGetString(GL_VERSION) << std::endl;
 
     {
-        float positions[32] =
+        float positionsAndUV[] =
         {
-          -0.5f, -0.5f, 0.0f, 0.0f,
-           0.5f, -0.5f, 1.0f, 0.0f,
-           0.5f,  0.5f, 1.0f, 1.0f,
-          -0.5f,  0.5f, 0.0f, 1.0f,
+          //position(2) uv(2)       
+          -0.5f, -0.5f, 0.0f, 0.0f, 
+           0.5f, -0.5f, 1.0f, 0.0f, 
+           0.5f,  0.5f, 1.0f, 1.0f, 
+          -0.5f,  0.5f, 0.0f, 1.0f, 
 
-          -1.5f, -1.5f, 0.0f, 0.0f,
-          -0.5f, -1.5f, 1.0f, 0.0f,
-          -0.5f, -0.5f, 1.0f, 1.0f,
+          -1.5f, -1.5f, 0.0f, 0.0f, 
+          -0.5f, -1.5f, 1.0f, 0.0f, 
+          -0.5f, -0.5f, 1.0f, 1.0f, 
           -1.5f, -0.5f, 0.0f, 1.0f
         };
 
+        float positionsAndColor[] =
+        {
+            //position(2) color(3)       
+            -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+             0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+             0.5f,  0.5f, 0.0f, 0.0f, 1.0f,
+            -0.5f,  0.5f, 1.0f, 1.0f, 0.0f,
+
+            -1.5f, -1.5f, 0.5f, 0.0f, 0.2f,
+            -0.5f, -1.5f, 0.7f, 1.0f, 0.1f,
+            -0.5f, -0.5f, 0.2f, 0.0f, 1.0f,
+            -1.5f, -0.5f, 1.0f, 1.0f, 0.8f
+        };
+                
+           
         unsigned int indices[] =
         {
             0, 1, 2,
@@ -79,14 +95,16 @@ int main(void)
         VertexArray va;
         VertexBufferLayout layout;
         layout.Push<float>(2);
-        layout.Push<float>(2);
+        layout.Push<float>(3);
+        
 
-        VertexBuffer vb(positions, 4 * 8 * sizeof(float));
+        VertexBuffer vb(positionsAndColor, 5 * 8 * sizeof(float));
         IndexBuffer ib(indices, 12);
         va.AddBuffer(vb, layout);
 
 
-        Shader shader("res/shaders/TextureShader.shader");
+        //Shader shader("res/shaders/TextureShader.shader");
+        Shader shader("res/shaders/TestRectangle.shader");
         shader.Bind();
 
         Texture texture("res/textures/pic.png");
