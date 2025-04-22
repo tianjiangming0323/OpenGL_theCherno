@@ -77,6 +77,21 @@ int main(void)
             -0.5f, -0.5f, 0.2f, 0.0f, 1.0f,
             -1.5f, -0.5f, 1.0f, 1.0f, 0.8f
         };
+
+        //S30Ìí¼Ó
+        float positionsAndColorAndUVAndIndex[] =
+        {
+            //position(2) color(3)          UV(2)       IndexOfTexture(1)
+            -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+             0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+             0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+            -0.5f,  0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+
+            -1.5f, -1.5f, 0.5f, 0.0f, 0.2f, 0.0f, 0.0f, 1.0f,
+            -0.5f, -1.5f, 0.7f, 1.0f, 0.1f, 1.0f, 0.0f, 1.0f,
+            -0.5f, -0.5f, 0.2f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+            -1.5f, -0.5f, 1.0f, 1.0f, 0.8f, 0.0f, 1.0f, 1.0f
+        };
                 
            
         unsigned int indices[] =
@@ -96,21 +111,29 @@ int main(void)
         VertexBufferLayout layout;
         layout.Push<float>(2);
         layout.Push<float>(3);
+        layout.Push<float>(2);
+        layout.Push<float>(1);
         
 
-        VertexBuffer vb(positionsAndColor, 5 * 8 * sizeof(float));
+        VertexBuffer vb(positionsAndColorAndUVAndIndex, 8 * 8 * sizeof(float));
         IndexBuffer ib(indices, 12);
         va.AddBuffer(vb, layout);
 
 
         //Shader shader("res/shaders/TextureShader.shader");
-        Shader shader("res/shaders/TestRectangle.shader");
+        Shader shader("res/shaders/TextureShaderBatching.shader");
         shader.Bind();
 
         Texture texture("res/textures/pic.png");
-        texture.Bind();
-        shader.SetUniform1i("u_Texture", 0);
+        Texture texture1("res/textures/pic1.png");
+        texture.Bind(0);
+        texture1.Bind(1);
 
+        shader.SetUniform1i("u_Texture1", 0);
+        shader.SetUniform1i("u_Texture2", 1);
+
+        int array[2] = { 0,1 };
+        shader.SetUniformArrayInt("u_Texture", 2, array);
 
 
         shader.Unbind();

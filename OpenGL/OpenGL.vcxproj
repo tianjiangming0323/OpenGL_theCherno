@@ -161,6 +161,7 @@
     <None Include="res\shaders\Basic.shader" />
     <None Include="res\shaders\TestRectangle.shader" />
     <None Include="res\shaders\TextureShader.shader" />
+    <None Include="res\shaders\TextureShaderBatching.shader" />
     <None Include="src\vendor\glm\detail\func_common.inl" />
     <None Include="src\vendor\glm\detail\func_common_simd.inl" />
     <None Include="src\vendor\glm\detail\func_exponential.inl" />
@@ -611,6 +612,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\textures\pic.png" />
+    <Image Include="res\textures\pic1.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

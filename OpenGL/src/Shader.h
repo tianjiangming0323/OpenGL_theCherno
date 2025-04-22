@@ -29,9 +29,10 @@ public:
 	void Unbind() const;
 
 	//Set Uniforms
-	void SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3);
-	void SetUniform1i(const std::string& name, int value);
-	void SetUnifromMat4f(const std::string& name, const glm::mat4& matrix);
+	void SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3);   //4个float
+	void SetUniform1i(const std::string& name, int value);    //1个int
+	void SetUnifromMat4f(const std::string& name, const glm::mat4& matrix);    //4*4矩阵
+	void SetUniformArrayInt(const std::string& name, const int size, const int* Array);     //数组
 
 private:
 	ShaderProgramSource ParseShader(const std::string& filepath);

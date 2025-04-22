@@ -503,6 +503,7 @@
       <Filter>Header Files</Filter>
     </None>
     <None Include="res\shaders\TestRectangle.shader" />
+    <None Include="res\shaders\TextureShaderBatching.shader" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Renderer.h">
@@ -1429,6 +1430,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\textures\pic.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\textures\pic1.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
