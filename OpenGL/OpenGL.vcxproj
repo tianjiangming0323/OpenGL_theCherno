@@ -136,6 +136,7 @@
     <ClCompile Include="src\Application1.cpp" />
     <ClCompile Include="src\Application1NoComments.cpp" />
     <ClCompile Include="src\ApplicationBatching.cpp" />
+    <ClCompile Include="src\ApplicationDynamic.cpp" />
     <ClCompile Include="src\ApplicationTest.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\Pipeline.cpp" />
